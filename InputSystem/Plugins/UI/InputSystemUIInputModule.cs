@@ -258,36 +258,34 @@ namespace UnityEngine.InputSystem.UI
             // the first shot.
             if (eventData.pointerType == UIPointerType.Tracked && TrackedDeviceRaycaster.s_Instances.length > 0)
             {
+                RaycastResult distanceRaycastResult = default;
+                float closestDistance = float.MaxValue;
+
                 for (var i = 0; i < TrackedDeviceRaycaster.s_Instances.length; ++i)
                 {
                     var trackedDeviceRaycaster = TrackedDeviceRaycaster.s_Instances[i];
                     m_RaycastResultCache.Clear();
                     trackedDeviceRaycaster.PerformRaycast(eventData, m_RaycastResultCache);
-
                     if (m_RaycastResultCache.Count > 0)
                     {
                         var raycastResult = m_RaycastResultCache[0];
-
-                        if (m_SortByDistance && m_RaycastResultCache.Count > 1)
+                        m_RaycastResultCache.Clear();
+                        if (m_SortByDistance)
                         {
-                            float closestDistance = raycastResult.distance;
-                            // Start at 1 because we've already cached the value at index 0.
-                            for (var index = 1; index < m_RaycastResultCache.Count; index++)
+                            if (raycastResult.distance < closestDistance)
                             {
-                                var raycast = m_RaycastResultCache[index];
-                                if (raycast.distance < closestDistance)
-                                {
-                                    raycastResult = raycast;
-                                    closestDistance = raycast.distance;
-                                }
+                                distanceRaycastResult = raycastResult;
+                                closestDistance = raycastResult.distance;
                             }
                         }
-
-                        m_RaycastResultCache.Clear();
-                        return raycastResult;
+                        else
+                        {
+                            return raycastResult;
+                        }
                     }
                 }
-                return default;
+
+                return m_SortByDistance ? distanceRaycastResult : default;
             }
 
             // Otherwise pass it along to the normal raycasting logic.
