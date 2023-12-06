@@ -64,6 +64,12 @@ namespace UnityEngine.InputSystem.UI
             set => m_DeselectOnBackgroundClick = value;
         }
 
+        public bool sortByDistance
+        {
+            get => m_SortByDistance;
+            set => m_SortByDistance = value;
+        }
+
         /// <summary>
         /// How to deal with the presence of pointer-type input from multiple devices.
         /// </summary>
@@ -257,9 +263,26 @@ namespace UnityEngine.InputSystem.UI
                     var trackedDeviceRaycaster = TrackedDeviceRaycaster.s_Instances[i];
                     m_RaycastResultCache.Clear();
                     trackedDeviceRaycaster.PerformRaycast(eventData, m_RaycastResultCache);
+
                     if (m_RaycastResultCache.Count > 0)
                     {
                         var raycastResult = m_RaycastResultCache[0];
+
+                        if (m_SortByDistance && m_RaycastResultCache.Count > 1)
+                        {
+                            float closestDistance = raycastResult.distance;
+                            // Start at 1 because we've already cached the value at index 0.
+                            for (var index = 1; index < m_RaycastResultCache.Count; index++)
+                            {
+                                var raycast = m_RaycastResultCache[index];
+                                if (raycast.distance < closestDistance)
+                                {
+                                    raycastResult = raycast;
+                                    closestDistance = raycast.distance;
+                                }
+                            }
+                        }
+
                         m_RaycastResultCache.Clear();
                         return raycastResult;
                     }
@@ -2329,6 +2352,7 @@ namespace UnityEngine.InputSystem.UI
         [SerializeField, HideInInspector] private InputActionReference m_TrackedDeviceOrientationAction;
 
         [SerializeField] private bool m_DeselectOnBackgroundClick = true;
+        [SerializeField] private bool m_SortByDistance;
         [SerializeField] private UIPointerBehavior m_PointerBehavior = UIPointerBehavior.SingleMouseOrPenButMultiTouchAndTrack;
         [SerializeField, HideInInspector] internal CursorLockBehavior m_CursorLockBehavior = CursorLockBehavior.OutsideScreen;
 
